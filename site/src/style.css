@@ -1,0 +1,30 @@
+.logo {
+  width: 40px;
+  vertical-align: baseline;
+  display: inline-block;
+}
+
+body {
+  margin: 0;
+  padding: 0 1rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.5;
+  color: #333;
+  background-color: #f9f9f9;
+  max-width: 800px;
+  margin: auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: 1rem;
+}
