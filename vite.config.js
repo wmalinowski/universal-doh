@@ -1,3 +1,5 @@
+/// <reference types="vitest/config" />
+
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { defineConfig } from "vite";
@@ -21,4 +23,12 @@ export default defineConfig({
       rollupTypes: true,
     }),
   ],
+  test: {
+    coverage: {
+      include: ["lib/**/*.ts"],
+      thresholds: {
+        functions: 70,
+      },
+    },
+  },
 });

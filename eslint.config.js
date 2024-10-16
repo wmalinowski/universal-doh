@@ -13,7 +13,7 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["dist/**/*", "dist-site/**/*"],
+    ignores: ["dist/**/*", "dist-site/**/*", "coverage/**/*"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
