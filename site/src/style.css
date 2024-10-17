@@ -1,13 +1,13 @@
 .logo {
-  width: 40px;
-  vertical-align: baseline;
-  display: inline-block;
+  width: 140px;
+  margin: 0 auto;
+  display: block;
 }
 
 body {
   margin: 0;
   padding: 0 1rem;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: Verdana, sans-serif;
   line-height: 1.5;
   color: #333;
   background-color: #f9f9f9;
@@ -21,8 +21,12 @@ h3,
 h4,
 h5,
 h6 {
-  margin-bottom: 0.5rem;
   font-weight: 600;
+  text-align: center;
+}
+
+.subtitle {
+  text-align: center;
 }
 
 p {

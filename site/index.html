@@ -8,12 +8,83 @@
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
-    <div>
-      <h1>
-        <img src="/universal-doh.svg" class="logo" />
-        universal-doh <span class="version"></span>
-      </h1>
-      <div>Universal <strong>DNS over HTTPS</strong> TypeScript library</div>
-    </div>
+    <img src="/universal-doh.svg" class="logo" />
+    <h1>universal-doh</h1>
+    <p class="subtitle">
+      Universal <strong>DNS over HTTPS</strong> TypeScript/JavaScript library
+    </p>
+
+    <h2>Try It Now</h2>
+    <form id="dns-form">
+      <label for="domain">Domain Name:</label>
+      <input type="text" id="domain" name="domain" required />
+
+      <label for="record-type">Record Type:</label>
+      <select id="record-type" name="record-type">
+        <option value="A">A</option>
+        <option value="AAAA">AAAA</option>
+        <option value="CNAME">CNAME</option>
+        <option value="MX">MX</option>
+      </select>
+
+      <button type="submit">Resolve</button>
+    </form>
+
+    <pre id="response">DNS response will appear here.</pre>
+
+    <h2>Why Use <em>universal-doh</em>?</h2>
+    <p>
+      <em>universal-doh</em> is a TypeScript library for performing DNS over
+      HTTPS (DoH) queries across various environments. It's designed to be
+      universal, lightweight, and fully typed.
+    </p>
+
+    <h2>Features</h2>
+    <ul>
+      <li>
+        <strong>Universal Compatibility:</strong>
+        Works seamlessly in Node.js (v18+), browsers, web workers, Cloudflare
+        Workers, Bun, and more.
+      </li>
+      <li>
+        <strong>Batteries Included:</strong>
+        Built-in support for IDN (International Domain Names) through punycode,
+        configurable timeouts, and basic caching.
+      </li>
+      <li>
+        <strong>No Dependencies:</strong>
+        Zero runtime dependencies and supports tree shaking to minimize bundle
+        size.
+      </li>
+      <li>
+        <strong>Open Source:</strong>
+        Released under the
+        <a href="https://github.com/wmalinowski/universal-doh/blob/main/LICENSE"
+          >MIT License</a
+        >, source available on
+        <a href="https://github.com/wmalinowski/universal-doh">GitHub</a>.
+      </li>
+      <li>
+        <strong>Truly Asynchronous:</strong>
+        Unlike Node's <code>dns.lookup()</code> which uses blocking threads,
+        <em>universal-doh</em> performs DNS queries asynchronously over HTTPS,
+        ensuring efficient resolution even under high load or with slow system
+        resolvers.
+      </li>
+      <li>
+        <strong>TypeScript Support:</strong>
+        Written entirely in TypeScript with complete type definitions.
+      </li>
+    </ul>
+
+    <h2>Non-Goals</h2>
+    <p>
+      <em>universal-doh</em> is not intended to be a drop-in replacement for
+      Node's DNS package.
+      <!-- TODO why not? what are the limitations? -->
+    </p>
+
+    <!-- <h2>How It Works</h2> -->
+    <p></p>
   </body>
 </html>
