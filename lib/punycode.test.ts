@@ -12,6 +12,11 @@ describe("ascii domains", () => {
     expect(ascii).toBe("www.example.com");
   });
 
+  test("WwW.eXaMpLe.CoM", () => {
+    const ascii = domainToAscii("www.example.com");
+    expect(ascii).toBe("www.example.com");
+  });
+
   test("invalid.....com", () => {
     const ascii = domainToAscii("invalid.....com");
     expect(ascii).toBe("invalid.....com");
@@ -20,6 +25,137 @@ describe("ascii domains", () => {
   test("xn--84h.com", () => {
     const ascii = domainToAscii("xn--84h.com");
     expect(ascii).toBe("xn--84h.com");
+  });
+});
+
+// https://unicode.org/reports/tr46/
+describe("IDN domains", () => {
+  test("Bücher.com", () => {
+    const unicode = "bücher.com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--bcher-kva.com");
+  });
+
+  test("öbb.at", () => {
+    const unicode = "öbb.at";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--bb-eka.at");
+  });
+
+  test("ÖBB.at", () => {
+    const unicode = "ÖBB.at";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--bb-eka.at");
+  });
+
+  test("faß.de", () => {
+    const unicode = "faß.de";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--fa-hia.de");
+  });
+
+  test("βόλος.com", () => {
+    const unicode = "βόλος.com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--nxasmm1c.com");
+  });
+
+  test("ශ්‍රී.com", () => {
+    const unicode = "ශ්‍රී.com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--10cl1a0b660p.com");
+  });
+
+  test("نامه‌ای.com", () => {
+    const unicode = "نامه‌ای.com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--mgba3gch31f060k.com");
+  });
+
+  test("√.com", () => {
+    const unicode = "√.com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--19g.com");
+  });
+
+  test("googIe.com", () => {
+    const unicode = "googIe.com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("googie.com");
+  });
+
+  test("U+002E ( . ) FULL STOP", () => {
+    const unicode = "example.com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("example.com");
+  });
+
+  test("U+FF0E ( ． ) FULLWIDTH FULL STOP", () => {
+    const unicode = "example．com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("example.com");
+  });
+
+  test("U+3002 ( 。 ) IDEOGRAPHIC FULL STOP", () => {
+    const unicode = "example。com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("example.com");
+  });
+
+  test("U+FF61 ( ｡ ) HALFWIDTH IDEOGRAPHIC FULL STOP", () => {
+    const unicode = "example｡com";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("example.com");
+  });
+
+  test("all separators", () => {
+    const unicode = "a.b．c。d｡e";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("a.b.c.d.e");
+  });
+
+  test("日本語。ＪＰ", () => {
+    const unicode = "日本語。ＪＰ";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--wgv71a119e.jp");
+  });
+});
+
+describe("Polish well known words", () => {
+  test("żółć.pl", () => {
+    const unicode = "żółć.pl";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--kda4b0koi.pl");
+  });
+
+  test("ŻÓŁĆ.pl", () => {
+    const unicode = "ŻÓŁĆ.pl";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--kda4b0koi.pl");
+  });
+
+  test("źdźbło.pl", () => {
+    const unicode = "źdźbło.pl";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--dbo-iwa1zb.pl");
+  });
+
+  test("ŹDŹBŁO.pl", () => {
+    const unicode = "ŹDŹBŁO.pl";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--dbo-iwa1zb.pl");
+  });
+
+  test("łódź.pl", () => {
+    const unicode = "łódź.pl";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--d-uga0v4h.pl");
+  });
+
+  test("ŁÓDŹ.pl", () => {
+    const unicode = "ŁÓDŹ.pl";
+    const ascii = domainToAscii(unicode);
+    expect(ascii).toBe("xn--d-uga0v4h.pl");
   });
 });
 
@@ -32,25 +168,37 @@ describe("emoji domains", () => {
   });
 
   test("♨.com", () => {
-    const unicode = "♨.com";
-    const ascii = domainToAscii(unicode);
-    expect(ascii).toBe("xn--j6h.com");
+    const punycoded = "xn--j6h.com";
+
+    const unicode1 = "♨.com";
+    const ascii1 = domainToAscii(unicode1);
+    expect(ascii1).toBe(punycoded);
+
+    const unicode2 = "♨️.com";
+    const ascii2 = domainToAscii(unicode2);
+    expect(ascii2).toBe(punycoded);
   });
 
   test("☮.com", () => {
-    const unicode = "☮.com";
-    const ascii = domainToAscii(unicode);
-    expect(ascii).toBe("xn--v4h.com");
+    const punycoded = "xn--v4h.com";
+
+    const unicode1 = "☮.com";
+    const ascii1 = domainToAscii(unicode1);
+    expect(ascii1).toBe(punycoded);
+
+    const unicode2 = "☮️.com";
+    const ascii2 = domainToAscii(unicode2);
+    expect(ascii2).toBe(punycoded);
   });
 
   test("♌.com", () => {
-    const unicode = "♌.com";
+    const unicode = "♌️.com";
     const ascii = domainToAscii(unicode);
     expect(ascii).toBe("xn--q5h.com");
   });
 
   test("I♥You.com", () => {
-    const unicode = "i♥you.com";
+    const unicode = "I♥You.com";
     const ascii = domainToAscii(unicode);
     expect(ascii).toBe("xn--iyou-5u3b.com");
   });
@@ -68,9 +216,15 @@ describe("emoji domains", () => {
   });
 
   test("👁👄👁.fm", () => {
-    const unicode = "👁👄👁.fm";
-    const ascii = domainToAscii(unicode);
-    expect(ascii).toBe("xn--mp8hai.fm");
+    const punycoded = "xn--mp8hai.fm";
+
+    const unicode1 = "👁👄👁.fm";
+    const ascii1 = domainToAscii(unicode1);
+    expect(ascii1).toBe(punycoded);
+
+    const unicode2 = "👁️👄👁️.fm";
+    const ascii2 = domainToAscii(unicode2);
+    expect(ascii2).toBe(punycoded);
   });
 });
 

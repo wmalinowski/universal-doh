@@ -1,5 +1,6 @@
 export function domainToAscii(domain: string) {
-  const labels = domain.split(".");
+  const preprocessed = preprocessDomain(domain);
+  const labels = preprocessed.split(".");
 
   const asciiLabels = labels.map((label) => {
     if (stringIsAscii(label)) {
@@ -10,6 +11,30 @@ export function domainToAscii(domain: string) {
   });
 
   return asciiLabels.join(".").toLowerCase();
+}
+
+function preprocessDomain(domain: string) {
+  // https://unicode.org/reports/tr46/#TableDerivationStep1
+  const exceptionalMapped = domain
+    .replace(/[．。｡]/gu, ".")
+    .replace(/ẞ/gu, "ß");
+
+  // we normalize the input to Unicode Normalization Form KC
+  const normalized = exceptionalMapped.normalize("NFKC");
+
+  // TODO: we deviate from the spec here to simplify the implementation
+  //       this may need to be revisited in the future
+
+  // we should perform case folding here (NFKC_Casefold)
+  // but we simplify this step to just lowercase the input instead
+  const lowercased = normalized.toLowerCase();
+
+  // remove all code points in the range U+FE00 to U+FE0F
+  // (Unicode variation selectors) from the input
+  // as they break emoji domains handling
+  const filtered = lowercased.replace(/[\uFE00-\uFE0F]/gu, "");
+
+  return filtered;
 }
 
 function stringIsAscii(str: string): boolean {
