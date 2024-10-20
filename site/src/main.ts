@@ -1,12 +1,13 @@
 import "./style.css";
+import { resolve } from "../../lib/index";
 
 async function handleDemoFormSubmit(e) {
   e.preventDefault();
   e.target.disabled = true;
 
   const domainEl = document.getElementById("domain") as HTMLInputElement | null;
-  const domain = domainEl?.value;
-  if (!domain) {
+  const name = domainEl?.value;
+  if (!name) {
     console.error("Domain not found");
     e.target.disabled = false;
     return;
@@ -33,8 +34,8 @@ async function handleDemoFormSubmit(e) {
   responseElement.textContent = "Resolving...";
 
   try {
-    const response = "Sorry, not ready yet";
-    responseElement.textContent = JSON.stringify(response, null, 2);
+    const response = await resolve(name, recordType);
+    responseElement.textContent = response; //JSON.stringify(response, null, 2);
     e.target.disabled = false;
   } catch (error) {
     responseElement.textContent = "Error: " + error.message;

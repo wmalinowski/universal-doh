@@ -17,14 +17,29 @@
     <h2>Try It Now</h2>
     <form id="dns-form">
       <label for="domain">Domain Name:</label>
-      <input type="text" id="domain" name="domain" required />
+      <input
+        type="text"
+        id="domain"
+        name="domain"
+        value="cloudflare.com"
+        required
+      />
 
       <label for="record-type">Record Type:</label>
       <select id="record-type" name="record-type">
-        <option value="A">A</option>
-        <option value="AAAA">AAAA</option>
-        <option value="CNAME">CNAME</option>
-        <option value="MX">MX</option>
+        <option value="1">A</option>
+        <!--
+        <option value="2">NS</option>
+        <option value="5">CNAME</option>
+        <option value="6">SOA</option>
+        <option value="12">PTR</option>
+        <option value="15">MX</option>
+        <option value="16">TXT</option>
+        -->
+        <option value="28">AAAA</option>
+        <!--
+        <option value="23">SRV</option>
+        -->
       </select>
 
       <button type="submit">Resolve</button>
