@@ -1,6 +1,15 @@
 {
   "name": "universal-doh",
   "version": "0.0.1",
+  "description": "DNS over HTTPS universal TypeScript library",
+  "author": {
+    "name": "Wojciech Malinowski"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wmalinowski/universal-doh.git"
+  },
   "type": "module",
   "files": [
     "dist"
