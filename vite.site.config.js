@@ -11,7 +11,7 @@ export default defineConfig({
     emptyOutDir: true,
     cssCodeSplit: false,
   },
-  base: "/universal-doh",
+  base: "/universal-doh/",
   define: {
     __LIB_VERSION__: JSON.stringify(process.env.npm_package_version),
   },

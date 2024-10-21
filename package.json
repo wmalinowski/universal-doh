@@ -1,20 +1,48 @@
 {
   "name": "universal-doh",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "DNS over HTTPS universal TypeScript library",
+  "keywords": [
+    "universal-doh",
+    "dns",
+    "dns-over-https",
+    "doh",
+    "dns-client",
+    "dns-resolver",
+    "typescript",
+    "nodejs",
+    "browser",
+    "web-workers",
+    "cloudflare-workers",
+    "bun",
+    "universal",
+    "idn",
+    "punycode",
+    "async-dns",
+    "dns-lookup",
+    "dns-query",
+    "cloudflare-dns",
+    "google-dns",
+    "quad9-dns"
+  ],
   "author": {
     "name": "Wojciech Malinowski"
   },
   "license": "MIT",
+  "homepage": "https://wmalinowski.github.io/universal-doh/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wmalinowski/universal-doh.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wmalinowski/universal-doh/issues"
   },
   "type": "module",
   "files": [
     "dist"
   ],
   "main": "dist/universal-doh.umd.cjs",
+  "browser": "dist/universal-doh.umd.cjs",
   "module": "dist/universal-doh.js",
   "types": "dist/universal-doh.d.ts",
   "exports": {
