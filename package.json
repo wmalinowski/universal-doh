@@ -1,6 +1,6 @@
 {
   "name": "universal-doh",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "DNS over HTTPS universal TypeScript library",
   "keywords": [
     "universal-doh",

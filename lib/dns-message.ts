@@ -44,7 +44,7 @@ interface DnsMessage {
   questions: DnsQuestion[];
   answers: DnsResourceRecord[];
   authorityRecords: DnsResourceRecord[];
-  additionalRecords: DnsResourceRecord[];
+  additionalRecords: Array<DnsOptRecord | DnsResourceRecord>;
 }
 
 type Bytes = number[];
@@ -59,7 +59,30 @@ interface DnsQuestion {
   qclass: number;
 }
 
-interface DnsResourceRecord {
+interface Opt {
+  optionCode: number;
+  optionLength: number;
+  optionData: Bytes;
+}
+
+export interface DnsOptRecord {
+  name: DNSName;
+  type: 41;
+  // 16 bit unsigned integer
+  maxPayloadSize: number;
+  // TTL field is used as the extended RCODE and flags
+  // https://datatracker.ietf.org/doc/html/rfc6891#section-6.1.3
+  extendedRcode: number;
+  version: number;
+  do: BinaryFlag;
+  z: number;
+  // 16 bit unsigned integer
+  rdlength: number;
+  // RDATA field is used for EDNS0 options
+  rdata: Opt[];
+}
+
+export interface DnsResourceRecord {
   name: DNSName;
   // 16 bit unsigned integer
   type: number;
@@ -163,11 +186,14 @@ export function createDnsQuery(questions: DnsQuestion[]): DnsMessage {
   message.additionalRecords.push({
     name: [],
     type: 41,
-    class: 0xffff, // max supported payload size
-    ttl: 0,
+    maxPayloadSize: 0xffff,
+    extendedRcode: 0,
+    version: 0,
+    do: 0,
+    z: 0,
     rdlength: 0,
     rdata: [],
-  });
+  } as DnsOptRecord);
 
   return message;
 }
@@ -217,19 +243,43 @@ function serializeName(message: DataView, offset: number, name: DNSName) {
 function serializeResourceRecord(
   message: DataView,
   offset: number,
-  record: DnsResourceRecord,
+  record: DnsResourceRecord | DnsOptRecord,
 ) {
   offset = serializeName(message, offset, record.name);
   message.setUint16(offset, record.type);
   offset += 2;
-  message.setUint16(offset, record.class);
+
+  if (record.type === 41) {
+    message.setUint16(offset, (<DnsOptRecord>record).maxPayloadSize);
+  } else {
+    message.setUint16(offset, (<DnsResourceRecord>record).class);
+  }
   offset += 2;
-  message.setUint32(offset, record.ttl);
+
+  let ttl;
+  if (record.type === 41) {
+    ttl = (<DnsOptRecord>record).extendedRcode << 24;
+    ttl |= (<DnsOptRecord>record).version << 16;
+    ttl |= (<DnsOptRecord>record).do << 15;
+    ttl |= (<DnsOptRecord>record).z;
+  } else {
+    ttl = (<DnsResourceRecord>record).ttl;
+  }
+
+  message.setUint32(offset, ttl);
   offset += 4;
   message.setUint16(offset, record.rdlength);
   offset += 2;
-  for (const byte of record.rdata) {
-    message.setUint8(offset++, byte);
+
+  if (record.type === 41) {
+    // OPT record
+    if (record.rdlength !== 0) {
+      throw new Error("EDNS0 OPT records not supported");
+    }
+  } else {
+    for (const byte of (<DnsResourceRecord>record).rdata) {
+      message.setUint8(offset++, byte);
+    }
   }
 
   return offset;
@@ -245,7 +295,7 @@ function serializeEDNS0Padding(message: DataView, offset: number) {
   // RFC 7830
   message.setUint16(offset, 12); // OPTION-CODE for EDNS0 padding
   offset += 2;
-  message.setUint16(offset, padding); // OPTION-CODE for EDNS0 padding
+  message.setUint16(offset, padding); // padding length
   offset += 2;
   for (let i = 0; i < padding; i++) {
     // we do not need to generate cryptographically secure random numbers
@@ -336,7 +386,7 @@ export function parseDnsMessage(
     message.nscount,
     message.authorityRecords,
   );
-  offset = parseResourceRecords(
+  offset = parseAdditionalRecords(
     rawView,
     offset,
     message.arcount,
@@ -373,6 +423,105 @@ function parseQuestion(
   return offset;
 }
 
+function parseAdditionalRecords(
+  rawView: DataView,
+  offset: number,
+  number: number,
+  records: Array<DnsResourceRecord | DnsOptRecord>,
+) {
+  for (let i = 0; i < number; i++) {
+    const name: DNSName = [];
+    offset = parseName(rawView, offset, name, 0);
+
+    const type = rawView.getUint16(offset);
+    offset += 2;
+
+    if (type === 41) {
+      const record: DnsOptRecord = {
+        name,
+        type,
+        maxPayloadSize: 0,
+        extendedRcode: 0,
+        version: 0,
+        do: 0,
+        z: 0,
+        rdlength: 0,
+        rdata: [],
+      };
+
+      offset = parseOptRecordBody(rawView, offset, record);
+
+      records.push(record);
+    } else {
+      const record: DnsResourceRecord = {
+        name,
+        type,
+        class: 0,
+        ttl: 0,
+        rdlength: 0,
+        rdata: [],
+      };
+
+      offset = parseResourceRecordBody(rawView, offset, record);
+
+      records.push(record);
+    }
+  }
+
+  return offset;
+}
+
+function parseOptRecordBody(
+  rawView: DataView,
+  offset: number,
+  record: DnsOptRecord,
+) {
+  record.maxPayloadSize = rawView.getUint16(offset);
+  offset += 2;
+
+  // TTL field is used as the extended RCODE and flags
+  const ttl = rawView.getUint32(offset);
+  offset += 4;
+
+  record.extendedRcode = (ttl & 0xff000000) >> 24;
+  record.version = (ttl & 0x00ff0000) >> 16;
+  record.do = ((ttl & 0x00008000) >> 15) as BinaryFlag;
+  record.z = ttl & 0x00007fff;
+
+  record.rdlength = rawView.getUint16(offset);
+  offset += 2;
+  for (let j = 0; j < record.rdlength; j++) {
+    const opt = {
+      optionCode: rawView.getUint16(offset),
+      optionLength: rawView.getUint16(offset + 2),
+      optionData: [],
+    } as Opt;
+    offset += 4;
+    for (let k = 0; k < opt.optionLength; k++) {
+      opt.optionData.push(rawView.getUint8(offset++));
+    }
+    record.rdata.push(opt);
+  }
+  return offset;
+}
+
+function parseResourceRecordBody(
+  rawView: DataView,
+  offset: number,
+  record: DnsResourceRecord,
+) {
+  record.class = rawView.getUint16(offset);
+  offset += 2;
+  record.ttl = rawView.getUint32(offset);
+  offset += 4;
+  record.rdlength = rawView.getUint16(offset);
+  offset += 2;
+  for (let j = 0; j < record.rdlength; j++) {
+    record.rdata.push(rawView.getUint8(offset++));
+  }
+  return offset;
+}
+
 function parseResourceRecords(
   rawView: DataView,
   offset: number,
@@ -385,18 +534,19 @@ function parseResourceRecords(
 
     const type = rawView.getUint16(offset);
     offset += 2;
-    const class_ = rawView.getUint16(offset);
-    offset += 2;
-    const ttl = rawView.getUint32(offset);
-    offset += 4;
-    const rdlength = rawView.getUint16(offset);
-    offset += 2;
-    const rdata = [];
-    for (let j = 0; j < rdlength; j++) {
-      rdata.push(rawView.getUint8(offset++));
-    }
 
-    records.push({ name, type, class: class_, ttl, rdlength, rdata });
+    const record: DnsResourceRecord = {
+      name,
+      type,
+      class: 0,
+      ttl: 0,
+      rdlength: 0,
+      rdata: [],
+    };
+
+    offset = parseResourceRecordBody(rawView, offset, record);
+
+    records.push(record);
   }
 
   return offset;

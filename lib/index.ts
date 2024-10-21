@@ -1,4 +1,5 @@
 export const version = __LIB_VERSION__;
+import type { DnsResourceRecord, DnsOptRecord } from "./dns-message";
 import {
   serializeDnsQuery,
   createDnsQuery,
@@ -72,12 +73,28 @@ function formatDnsMessage(message: ReturnType<typeof parseDnsMessage>) {
       ttl: record.ttl,
       value: formatRData(record.type, record.rdata),
     })),
-    additionalRecords: message.additionalRecords.map((record) => ({
-      name: dnsNameToString(record.name),
-      type: record.type,
-      ttl: record.ttl,
-      value: formatRData(record.type, record.rdata),
-    })),
+    additionalRecords: message.additionalRecords.map((record) => {
+      if (record.type === 41) {
+        return {
+          name: dnsNameToString(record.name),
+          type: record.type,
+          maxPayloadSize: (<DnsOptRecord>record).maxPayloadSize,
+          extendedRcode: (<DnsOptRecord>record).extendedRcode,
+          version: (<DnsOptRecord>record).version,
+          do: (<DnsOptRecord>record).do,
+          z: (<DnsOptRecord>record).z,
+          value: (<DnsOptRecord>record).rdata,
+        };
+      } else {
+        return {
+          name: dnsNameToString(record.name),
+          type: record.type,
+          class: (<DnsResourceRecord>record).class,
+          ttl: (<DnsResourceRecord>record).ttl,
+          value: formatRData(record.type, (<DnsResourceRecord>record).rdata),
+        };
+      }
+    }),
   };
   return JSON.stringify(formatted, null, 2);
 }
