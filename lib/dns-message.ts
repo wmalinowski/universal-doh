@@ -195,6 +195,9 @@ export function createDnsQuery(questions: DnsQuestion[]): DnsMessage {
     rdata: [],
   } as DnsOptRecord);
 
+  // leave space for EDNS0 padding
+  message.arcount += 1;
+
   return message;
 }
 
@@ -273,8 +276,14 @@ function serializeResourceRecord(
 
   if (record.type === 41) {
     // OPT record
-    if (record.rdlength !== 0) {
-      throw new Error("EDNS0 OPT records not supported");
+    for (const opt of (<DnsOptRecord>record).rdata) {
+      message.setUint16(offset, opt.optionCode);
+      offset += 2;
+      message.setUint16(offset, opt.optionLength);
+      offset += 2;
+      for (const byte of opt.optionData) {
+        message.setUint8(offset++, byte);
+      }
     }
   } else {
     for (const byte of (<DnsResourceRecord>record).rdata) {
@@ -290,18 +299,27 @@ function serializeEDNS0Padding(message: DataView, offset: number) {
 
   // padding header of 4 bytes must be included
   const length = offset + 4;
-  const padding = Math.ceil(length / 128) * 128 - length;
+  const paddingLength = Math.ceil(length / 128) * 128 - length;
+
+  const padding = Array.from({ length: paddingLength }, () =>
+    Math.floor(Math.random() * 0xff),
+  );
 
   // RFC 7830
-  message.setUint16(offset, 12); // OPTION-CODE for EDNS0 padding
-  offset += 2;
-  message.setUint16(offset, padding); // padding length
-  offset += 2;
-  for (let i = 0; i < padding; i++) {
-    // we do not need to generate cryptographically secure random numbers
-    // simple random numbers are enough to obfuscate the message
-    message.setUint8(offset++, Math.floor(Math.random() * 0xff));
-  }
+  const paddingRecord: DnsOptRecord = {
+    name: [],
+    type: 41,
+    maxPayloadSize: 0,
+    extendedRcode: 0,
+    version: 0,
+    do: 0,
+    z: 0,
+    rdlength: padding.length + 4,
+    rdata: [
+      { optionCode: 12, optionLength: padding.length, optionData: padding },
+    ],
+  };
+  offset = serializeResourceRecord(message, offset, paddingRecord);
 
   return offset;
 }
@@ -395,7 +413,7 @@ export function parseDnsMessage(
 
   if (offset !== raw.byteLength) {
     // TODO: implement support for parsing padding and replace the warning with error
-    console.warn(
+    throw new Error(
       `Unexpected end of message (offset: ${offset}, length: ${raw.byteLength})`,
     );
   }
@@ -490,13 +508,19 @@ function parseOptRecordBody(
 
   record.rdlength = rawView.getUint16(offset);
   offset += 2;
-  for (let j = 0; j < record.rdlength; j++) {
+
+  const rdEnd = offset + record.rdlength;
+
+  while (offset < rdEnd) {
+    const optionCode = rawView.getUint16(offset);
+    offset += 2;
+    const optionLength = rawView.getUint16(offset);
     const opt = {
-      optionCode: rawView.getUint16(offset),
-      optionLength: rawView.getUint16(offset + 2),
+      optionCode,
+      optionLength,
       optionData: [],
     } as Opt;
-    offset += 4;
+    offset += 2;
     for (let k = 0; k < opt.optionLength; k++) {
       opt.optionData.push(rawView.getUint8(offset++));
     }

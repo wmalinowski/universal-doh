@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+import type { DnsOptRecord } from "./dns-message";
 import {
   createDnsQuery,
   serializeDnsQuery,
@@ -82,8 +83,16 @@ describe("parseAnswer", () => {
     // it will add random padding to the message
     // so we cannot compare the buffers directly
     const serialized = serializeDnsQuery(query);
-
     const message = parseDnsMessage(serialized);
+
+    // we need cheat a bit and add padding to the expected message
+    const optRecords = message.additionalRecords.filter(
+      (ar) => ar.type === 41,
+    ) as DnsOptRecord[];
+    const paddingRecord = optRecords.filter(
+      (ar) => ar.type === 41 && ar.rdata[0]?.optionCode === 12,
+    )[0];
+    query.additionalRecords.push(paddingRecord);
 
     expect(message).toStrictEqual(query);
   });

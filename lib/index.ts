@@ -9,7 +9,7 @@ import {
 } from "./dns-message";
 import { domainToAscii } from "./punycode";
 
-export function resolve(name: string, type: string) {
+export function resolve(server: string, name: string, type: string) {
   const qualifiedName = domainToAscii(name);
 
   const query = createDnsQuery([
@@ -22,7 +22,9 @@ export function resolve(name: string, type: string) {
 
   const buffer = serializeDnsQuery(query);
 
-  const url = new URL("https://1.1.1.1/dns-query");
+  const url = new URL(server);
+  url.pathname = "/dns-query";
+
   return fetch(url, {
     method: "POST",
     mode: "cors",
@@ -34,9 +36,9 @@ export function resolve(name: string, type: string) {
   })
     .then((response) => {
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch: ${response.status} ${response.statusText}`,
-        );
+        return response.text().then((text) => {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        });
       }
       return response.arrayBuffer();
     })
