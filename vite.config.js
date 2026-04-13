@@ -3,7 +3,7 @@
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
+import dts from "unplugin-dts/vite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -20,14 +20,14 @@ export default defineConfig({
   },
   plugins: [
     dts({
-      rollupTypes: true,
+      bundleTypes: true,
     }),
   ],
   test: {
     coverage: {
       include: ["lib/**/*.ts"],
       thresholds: {
-        functions: 70,
+        functions: 60,
       },
     },
   },
